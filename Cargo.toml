@@ -10,7 +10,8 @@ byteorder = "1.5.0"
 crc16 = "0.4.0"
 log = "0.4.21"
 serialport = "4.3.0"
-ygw = {path = "../yamcs-gateway/ygw"}
+#ygw = {path = "../yamcs-gateway/ygw"}
+ygw = "0.5"
 async-trait = "0.1.78"
 tokio = "1.36.0"
 env_logger = "0.11.3"

@@ -8,7 +8,7 @@ use chrono::{Datelike, NaiveDateTime, Timelike};
 use serialport::SerialPort;
 use tokio::sync::mpsc::{Receiver, Sender};
 use ygw::protobuf::ygw::{ParameterData, ParameterDefinitionList};
-use ygw::utc_converter::{self, utc_to_instant, DateTimeComponents};
+use ygw::utc_converter::{utc_to_instant, DateTimeComponents};
 use ygw::{
     msg::{Addr, YgwMessage},
     protobuf::ygw::{ParameterDefinition, ParameterValue, Timestamp, Value},
@@ -77,7 +77,7 @@ impl YgwNode for P1Mon {
     }
 
     async fn run(
-        &mut self,
+        mut self: Box<Self>,
         node_id: u32,
         tx: Sender<YgwMessage>,
         rx: Receiver<YgwMessage>,
@@ -131,8 +131,8 @@ impl P1Mon {
     /// read data from serial port
     /// returns only if there was an error
     async fn process_serial_data(&mut self, p1mon_state: &mut P1MonState) -> Result<()> {
-        let file = File::open("test-data.txt")?;
-        let mut ser = BufReader::new(file);
+        let ser = self.serial_port.try_clone().map_err(|e| YgwError::Other(Box::new(e)))?;
+        let mut ser = BufReader::new(ser);
 
         let mut p1t = String::new();
 
@@ -144,7 +144,8 @@ impl P1Mon {
 
             match ser.read_line(&mut p1t) {
                 Ok(0) => {
-                    return Err(YgwError::IOError(io::Error::from(
+                    return Err(YgwError::IOError("While reading from serial port".into()
+                    , io::Error::from(
                         io::ErrorKind::UnexpectedEof,
                     )));
                 }
